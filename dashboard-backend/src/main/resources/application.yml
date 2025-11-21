@@ -1,0 +1,31 @@
+spring:
+  application:
+    name: dashboard-backend
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    properties:
+      # Confluent Cloud SASL/SSL Authentication
+      # Uncomment and configure for Confluent Cloud
+      # sasl.mechanism: PLAIN
+      # security.protocol: SASL_SSL
+      # sasl.jaas.config: org.apache.kafka.common.security.plain.PlainLoginModule required username="${KAFKA_API_KEY}" password="${KAFKA_API_SECRET}";
+    consumer:
+      group-id: dashboard-consumer-group
+      auto-offset-reset: latest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "*"
+
+kafka:
+  topic:
+    averaged-stock-prices: averaged-stock-prices
+
+server:
+  port: 8080
+
+logging:
+  level:
+    com.clutchforce.dashboardbackend: INFO
+    org.apache.kafka: WARN
+    org.springframework.web.socket: INFO
