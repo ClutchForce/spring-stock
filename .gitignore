@@ -48,3 +48,6 @@ buildNumber.properties
 
 # Spring Boot
 spring-boot-starter-parent/
+
+# API Secrets
+*.env
