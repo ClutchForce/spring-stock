@@ -16,6 +16,7 @@ import org.springframework.stereotype.Component;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Map;
 
 @Component
 @Slf4j
@@ -32,9 +33,17 @@ public class StockPriceAggregator {
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());
 
+        // Configure JsonSerde with trusted packages
         JsonSerde<StockTick> stockTickSerde = new JsonSerde<>(StockTick.class, objectMapper);
-        JsonSerde<AveragedStockPrice> averagedStockPriceSerde = new JsonSerde<>(AveragedStockPrice.class, objectMapper);
+        stockTickSerde.configure(Map.of(
+            "spring.json.trusted.packages", "*",
+            "spring.json.use.type.headers", "false"
+        ), false);
 
+        JsonSerde<AveragedStockPrice> averagedStockPriceSerde = new JsonSerde<>(AveragedStockPrice.class, objectMapper);
+        averagedStockPriceSerde.configure(Map.of(
+            "spring.json.trusted.packages", "*"
+        ), false);
         KStream<String, StockTick> stockTickStream = streamsBuilder
             .stream(inputTopic, Consumed.with(Serdes.String(), stockTickSerde));
 
