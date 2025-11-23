@@ -100,7 +100,7 @@ set +a
 # Run the application
 mvn spring-boot:run
 ```
-Stream Processor Expected Output:
+### Stream Processor Expected Output:
 ![Stream Processor Expected Output](./assets/streamProcessorOutput.png)
 
 *Wait until you see logs indicating the state has transitioned to `RUNNING`.*
@@ -120,7 +120,7 @@ set +a
 # Run the application
 mvn spring-boot:run
 ```
-Dashboard Backend Expected Output:
+### Dashboard Backend Expected Output:
 ![Dashboard Backend Expected Output](./assets/dashboardBackendOutput.png)
 
 *The application will start on port 8080.*
@@ -201,9 +201,10 @@ stompClient.connect({}, function() {
   - **Lombok**
   - **Jackson**
 
-## License
 
-Stream Lineage:
+## Stream Lineage:
 ![Stream Lineage](./assets/streamLineage.png)
+
+## License
 
 This project is provided as-is for educational and demonstration purposes.
