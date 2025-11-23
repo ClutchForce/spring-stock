@@ -2,13 +2,14 @@ spring:
   application:
     name: dashboard-backend
   kafka:
-    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    # Pull the bootstrap servers from the environment for Confluent Cloud or other remote clusters.
+    # Do NOT hardcode credentials here; use environment variables instead.
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
     properties:
-      # Confluent Cloud SASL/SSL Authentication
-      # Uncomment and configure for Confluent Cloud
-      # sasl.mechanism: PLAIN
-      # security.protocol: SASL_SSL
-      # sasl.jaas.config: org.apache.kafka.common.security.plain.PlainLoginModule required username="${KAFKA_API_KEY}" password="${KAFKA_API_SECRET}";
+      # Security settings for Confluent Cloud. These will be populated from environment variables.
+      security.protocol: SASL_SSL
+      sasl.mechanism: PLAIN
+      sasl.jaas.config: 'org.apache.kafka.common.security.plain.PlainLoginModule required username="${KAFKA_API_KEY}" password="${KAFKA_API_SECRET}";'
     consumer:
       group-id: dashboard-consumer-group
       auto-offset-reset: latest
