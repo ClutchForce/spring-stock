@@ -196,10 +196,6 @@ stompClient.connect({}, function() {
   - **WebSocket (STOMP/SockJS)**
   - **Lombok**
   - **Jackson**
-```bash
-cd stream-processor
-mvn spring-boot:run
-```
 
 ## License
 
