@@ -18,134 +18,154 @@ The project consists of three independent Spring Boot applications:
      (Topic)                         (Topic)
 ```
 
-## Modules
-
-### 1. Market Simulator (Producer)
-**Location:** `market-simulator/`
-
-A Kafka producer that simulates real-time stock market data by generating random stock ticks for major tech stocks (AAPL, GOOGL, MSFT, AMZN, TSLA, META, NVDA, JPM).
-
-**Features:**
-- Sends JSON-formatted stock ticks every second
-- Publishes to `raw-stock-ticks` Kafka topic
-- Configurable for Confluent Cloud SASL/SSL authentication
-
-**Run:**
-```bash
-cd market-simulator
-mvn spring-boot:run
-```
-
-### 2. Stream Processor (Kafka Streams)
-**Location:** `stream-processor/`
-
-A Kafka Streams application that processes stock ticks in real-time using 5-minute tumbling windows to calculate average prices and total volumes.
-
-**Features:**
-- Consumes from `raw-stock-ticks` topic
-- Calculates 5-minute tumbling window aggregations per stock symbol
-- Outputs averaged prices to `averaged-stock-prices` topic
-- Maintains running averages for price and total volume
-
-**Run:**
-```bash
-cd stream-processor
-mvn spring-boot:run
-```
-
-### 3. Dashboard Backend (Consumer + WebSocket)
-**Location:** `dashboard-backend/`
-
-A Spring Boot web application that consumes processed stock data and pushes it to connected WebSocket clients in real-time.
-
-**Features:**
-- Consumes from `averaged-stock-prices` topic
-- Exposes WebSocket endpoint at `/ws`
-- Broadcasts stock updates to `/topic/stock-prices`
-- REST API ready for dashboard integration
-
-**Run:**
-```bash
-cd dashboard-backend
-mvn spring-boot:run
-```
-
-**WebSocket Connection:**
-```javascript
-const socket = new SockJS('http://localhost:8080/ws');
-const stompClient = Stomp.over(socket);
-stompClient.connect({}, function() {
-    stompClient.subscribe('/topic/stock-prices', function(message) {
-        const stockData = JSON.parse(message.body);
-        console.log(stockData);
-    });
-});
-```
-
 ## Prerequisites
 
-- Java 17 or higher
-- Apache Maven 3.6+
-- Apache Kafka 3.6+ (or Confluent Cloud account)
+  - Java 17 or higher
+  - Apache Maven 3.6+
+  - A Confluent Cloud account (or a local Kafka cluster with SASL/SSL configured)
+
+-----
+
+## Setup Guide
+
+This project is configured to run securely with Confluent Cloud. Follow these steps to set up your environment.
+
+### 1\. Confluent Cloud Setup
+
+1.  **Log in** to your Confluent Cloud account.
+2.  **Create a Cluster** if you don't have one.
+3.  **Get Cluster Settings:**
+      * Go to **Cluster Settings**.
+      * Copy the **Bootstrap server** URL (e.g., `pkc-xxxxx.region.provider.confluent.cloud:9092`).
+4.  **Create API Credentials:**
+      * Go to **API Keys**.
+      * Create a new key based on your required granularity (Global access is easiest for development).
+      * **Copy the Key and Secret immediately**. You won't be able to see the secret again.
+
+### 2\. Create Kafka Topics
+
+In your Confluent Cloud cluster, create the following two topics with default settings (e.g., 3 partitions):
+
+  * `raw-stock-ticks`
+  * `averaged-stock-prices`
+
+### 3\. Configure Environment Secrets
+
+**IMPORTANT:** Do not commit your secrets to version control. This project uses `.env` files to load sensitive credentials into environment variables.
+
+You must create a file named `.env` inside **each of the three module directories**:
+
+  * `market-simulator/.env`
+  * `stream-processor/.env`
+  * `dashboard-backend/.env`
+
+Add the following content to **each** of the three `.env` files, replacing the placeholders with your actual Confluent Cloud values:
+
+```env
+KAFKA_BOOTSTRAP_SERVERS=your-bootstrap-server-url:9092
+KAFKA_API_KEY=YOUR_ACTUAL_API_KEY
+KAFKA_API_SECRET=YOUR_ACTUAL_API_SECRET
+```
+
+-----
 
 ## Building the Project
 
-Build all modules from the root directory:
+From the root directory of the project, build all modules:
 
 ```bash
 mvn clean install
 ```
 
-## Configuration
+-----
 
-Each module includes an `application.yml` file with configuration templates for both local Kafka and Confluent Cloud.
+## Running the Complete Pipeline
 
-### Local Kafka Setup
+You will need **three separate terminal windows** to run the pipeline.
 
-Default configuration uses `localhost:9092`:
-```yaml
-spring:
-  kafka:
-    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
-```
+**Critical Note:** In each terminal, you must load the variables from the `.env` file into the session *before* running the application. The commands below show how to do this.
 
-### Confluent Cloud Configuration
+### Terminal 1: Stream Processor (The Brain)
 
-Uncomment and configure the following in each module's `application.yml`:
+Start this first so it's ready to process data.
 
-```yaml
-spring:
-  kafka:
-    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:pkc-xxxxx.region.provider.confluent.cloud:9092}
-    properties:
-      sasl.mechanism: PLAIN
-      security.protocol: SASL_SSL
-      sasl.jaas.config: org.apache.kafka.common.security.plain.PlainLoginModule required username="${KAFKA_API_KEY}" password="${KAFKA_API_SECRET}";
-```
-
-Set environment variables:
 ```bash
-export KAFKA_BOOTSTRAP_SERVERS="pkc-xxxxx.region.provider.confluent.cloud:9092"
-export KAFKA_API_KEY="your-api-key"
-export KAFKA_API_SECRET="your-api-secret"
+cd stream-processor
+
+# Load secrets from the .env file into this terminal session
+set -a
+source .env
+set +a
+
+# Run the application
+mvn spring-boot:run
 ```
 
-## Kafka Topics
+*Wait until you see logs indicating the state has transitioned to `RUNNING`.*
 
-The following topics need to be created before running the applications:
+### Terminal 2: Dashboard Backend (The Consumer)
 
-1. **raw-stock-ticks** - Raw stock tick data from the simulator
-2. **averaged-stock-prices** - Aggregated 5-minute window averages
+Start this next to listen for processed results.
 
-For local Kafka:
 ```bash
-kafka-topics --create --topic raw-stock-ticks --bootstrap-server localhost:9092 --partitions 3 --replication-factor 1
-kafka-topics --create --topic averaged-stock-prices --bootstrap-server localhost:9092 --partitions 3 --replication-factor 1
+cd dashboard-backend
+
+# Load secrets from the .env file into this terminal session
+set -a
+source .env
+set +a
+
+# Run the application
+mvn spring-boot:run
+```
+
+*The application will start on port 8080.*
+
+### Terminal 3: Market Simulator (The Producer)
+
+Start this last to begin generating data.
+
+```bash
+cd market-simulator
+
+# Load secrets from the .env file into this terminal session
+set -a
+source .env
+set +a
+
+# Run the application
+mvn spring-boot:run
+```
+
+*You will see logs showing stock ticks being sent every second.*
+
+-----
+
+## Connecting to the Dashboard
+
+Once all three applications are running, you can connect to the WebSocket endpoint to receive real-time updates.
+
+  * **WebSocket Endpoint:** `http://localhost:8080/ws`
+  * **Subscription Topic:** `/topic/stock-prices`
+
+**Example Client-Side Code:**
+
+```javascript
+const socket = new SockJS('http://localhost:8080/ws');
+const stompClient = Stomp.over(socket);
+stompClient.connect({}, function() {
+    console.log('Connected to WebSocket');
+    stompClient.subscribe('/topic/stock-prices', function(message) {
+        const stockData = JSON.parse(message.body);
+        console.log('Received Stock Update:', stockData);
+    });
+});
 ```
 
 ## Data Models
 
-### StockTick (Raw Data)
+### StockTick (Raw Data Input)
+
 ```json
 {
   "symbol": "AAPL",
@@ -155,7 +175,8 @@ kafka-topics --create --topic averaged-stock-prices --bootstrap-server localhost
 }
 ```
 
-### AveragedStockPrice (Processed Data)
+### AveragedStockPrice (Processed Data Output)
+
 ```json
 {
   "symbol": "AAPL",
@@ -167,33 +188,18 @@ kafka-topics --create --topic averaged-stock-prices --bootstrap-server localhost
 }
 ```
 
-## Running the Complete Pipeline
-
-1. Start Kafka (if running locally)
-2. Create the required topics
-3. Start the modules in order:
-   ```bash
-   # Terminal 1
-   cd stream-processor && mvn spring-boot:run
-   
-   # Terminal 2
-   cd dashboard-backend && mvn spring-boot:run
-   
-   # Terminal 3
-   cd market-simulator && mvn spring-boot:run
-   ```
-
-4. Connect to the WebSocket endpoint to receive real-time updates
-
 ## Technology Stack
 
-- **Spring Boot 3.2.0** - Application framework
-- **Apache Kafka 3.6.0** - Message streaming platform
-- **Kafka Streams** - Stream processing library
-- **Spring Kafka** - Kafka integration
-- **WebSocket (STOMP/SockJS)** - Real-time client communication
-- **Lombok** - Boilerplate code reduction
-- **Jackson** - JSON serialization
+  - **Spring Boot 3.2.0**
+  - **Spring Cloud Stream Kafka Streams**
+  - **Apache Kafka 3.6.0**
+  - **WebSocket (STOMP/SockJS)**
+  - **Lombok**
+  - **Jackson**
+```bash
+cd stream-processor
+mvn spring-boot:run
+```
 
 ## License
 
