@@ -123,7 +123,7 @@ mvn spring-boot:run
 ### Dashboard Backend Expected Output:
 ![Dashboard Backend Expected Output](./assets/dashboardBackendOutput.png)
 
-*The application will start on port 8080.*
+*The application will start on port 8082.*
 
 ### Terminal 3: Market Simulator (The Producer)
 
@@ -149,13 +149,13 @@ mvn spring-boot:run
 
 Once all three applications are running, you can connect to the WebSocket endpoint to receive real-time updates.
 
-  * **WebSocket Endpoint:** `http://localhost:8080/ws`
+  * **WebSocket Endpoint:** `http://localhost:8082/ws`
   * **Subscription Topic:** `/topic/stock-prices`
 
 **Example Client-Side Code:**
 
 ```javascript
-const socket = new SockJS('http://localhost:8080/ws');
+const socket = new SockJS('http://localhost:8082/ws');
 const stompClient = Stomp.over(socket);
 stompClient.connect({}, function() {
     console.log('Connected to WebSocket');
