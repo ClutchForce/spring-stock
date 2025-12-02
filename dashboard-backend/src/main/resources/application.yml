@@ -23,7 +23,7 @@ kafka:
     averaged-stock-prices: averaged-stock-prices
 
 server:
-  port: 8080
+  port: 8082
 
 logging:
   level:
