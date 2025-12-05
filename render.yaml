@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: stock-dashboard-backend
+    env: docker
+    dockerfilePath: ./dashboard-backend/Dockerfile
+    dockerContext: ./dashboard-backend
+    envVars:
+      - key: KAFKA_BOOTSTRAP_SERVERS
+        sync: false
+      - key: KAFKA_API_KEY
+        sync: false
+      - key: KAFKA_API_SECRET
+        sync: false
+      - key: FINNHUB_API_KEY
+        sync: false
+      - key: PORT
+        value: 8082
