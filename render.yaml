@@ -1,9 +1,25 @@
 services:
+  # Stream Processor - The Brain
   - type: web
-    name: stock-dashboard-backend
+    name: stock-stream-processor
     env: docker
-    dockerfilePath: ./dashboard-backend/Dockerfile
-    dockerContext: ./dashboard-backend
+    dockerfilePath: ./stream-processor/Dockerfile
+    dockerContext: .
+    envVars:
+      - key: KAFKA_BOOTSTRAP_SERVERS
+        sync: false
+      - key: KAFKA_API_KEY
+        sync: false
+      - key: KAFKA_API_SECRET
+        sync: false
+    healthCheckPath: /actuator/health
+    
+  # Market Simulator - The Producer
+  - type: web
+    name: stock-market-simulator
+    env: docker
+    dockerfilePath: ./market-simulator/Dockerfile
+    dockerContext: .
     envVars:
       - key: KAFKA_BOOTSTRAP_SERVERS
         sync: false
@@ -12,6 +28,21 @@ services:
       - key: KAFKA_API_SECRET
         sync: false
       - key: FINNHUB_API_KEY
+        sync: false
+    healthCheckPath: /actuator/health
+    
+  # Dashboard Backend - The Consumer
+  - type: web
+    name: stock-dashboard-backend
+    env: docker
+    dockerfilePath: ./dashboard-backend/Dockerfile
+    dockerContext: .
+    envVars:
+      - key: KAFKA_BOOTSTRAP_SERVERS
+        sync: false
+      - key: KAFKA_API_KEY
+        sync: false
+      - key: KAFKA_API_SECRET
         sync: false
       - key: PORT
         value: 8082
