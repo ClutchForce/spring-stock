@@ -23,7 +23,7 @@ kafka:
     averaged-stock-prices: averaged-stock-prices
 
 server:
-  port: 8080
+  port: ${PORT:8082}  # Render provides PORT variable
 
 logging:
   level:
