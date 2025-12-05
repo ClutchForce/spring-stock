@@ -1,12 +1,30 @@
+# dashboard-backend/Dockerfile
 FROM maven:3.9-eclipse-temurin-17 AS build
-WORKDIR /app
-COPY ../pom.xml /root/pom.xml
-COPY pom.xml .
-COPY src ./src
-RUN mvn clean package -DskipTests
+WORKDIR /build
 
+# Copy the parent POM
+COPY pom.xml .
+
+# Copy all module POMs (needed for dependency resolution)
+COPY market-simulator/pom.xml ./market-simulator/
+COPY stream-processor/pom.xml ./stream-processor/
+COPY dashboard-backend/pom.xml ./dashboard-backend/
+
+# Copy dashboard-backend source code
+COPY dashboard-backend/src ./dashboard-backend/src
+
+# Build only the dashboard-backend module (but parent POM is available)
+RUN mvn clean package -pl dashboard-backend -am -DskipTests
+
+# Runtime stage
 FROM eclipse-temurin:17-jre
 WORKDIR /app
-COPY --from=build /app/target/*.jar app.jar
-EXPOSE 8082
-CMD ["java", "-Dserver.port=${PORT:-8082}", "-jar", "app.jar"]
+
+# Copy the built JAR from the build stage
+COPY --from=build /build/dashboard-backend/target/*.jar app.jar
+
+# Render provides PORT environment variable
+EXPOSE ${PORT:-8082}
+
+# Use PORT from environment
+ENTRYPOINT ["sh", "-c", "java -Dserver.port=${PORT:-8082} -jar app.jar"]
