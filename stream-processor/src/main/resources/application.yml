@@ -30,3 +30,6 @@ logging:
     com.clutchforce.streamprocessor: INFO
     org.apache.kafka: WARN
     org.apache.kafka.streams: INFO
+
+server:
+  port: 8081
