@@ -1,6 +1,6 @@
 services:
   # Stream Processor - The Brain
-  - type: web
+  - type: worker
     name: stock-stream-processor
     env: docker
     dockerfilePath: ./stream-processor/Dockerfile
@@ -15,7 +15,7 @@ services:
     healthCheckPath: /actuator/health
     
   # Market Simulator - The Producer
-  - type: web
+  - type: worker
     name: stock-market-simulator
     env: docker
     dockerfilePath: ./market-simulator/Dockerfile
